@@ -67,7 +67,7 @@ def get_adb_map():
 
 
 # 删除文件
-def run_adb_rm(count, device, status):
+def run_adb_rm(count, device):
     # 完整的adb命令
     adb_command = f"adb -s {device} shell rm -rf {remote_file_path}"
     try:
@@ -76,16 +76,22 @@ def run_adb_rm(count, device, status):
                                 text=True)
         print("删除文件结果：")
         print(result)
+        # 记录对应端口的设备状态
+        devices = get_adb_map()
+        status = devices.get(device)
         logging.info(f"4删除平板中包数据,成功,{result}",
                      extra={'count': count, 'deviceID': device, 'result': status})
     except subprocess.CalledProcessError as e:
         print(f"adb命令执行错误：\n{e.stderr}")
+        # 记录对应端口的设备状态
+        devices = get_adb_map()
+        status = devices.get(device)
         logging.error(f"4删除平板中包数据,失败, {e}",
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
 # 使用ADB命令
-def run_adb_push(count, device, status):
+def run_adb_push(count, device):
     # 完整的adb命令
     adb_command = f"adb -s {device} push {local_file_path} {remote_file_path}"
     try:
@@ -105,10 +111,16 @@ def run_adb_push(count, device, status):
         file_size_byte = match_file_size.group()
         speed = match_speed.group()
         file_size = bytes_to_megabytes(int(file_size_byte))
+        # 记录对应端口的设备状态
+        devices = get_adb_map()
+        status = devices.get(device)
         logging.info(f"5推数据包,成功,{file_size}M文件共花费{cost_time}传输速率{speed}",
                          extra={'count': count, 'deviceID': device, 'result': status})
     except subprocess.CalledProcessError as e:
         print(f"adb命令执行错误：\n{e.stderr}")
+        # 记录失败后对应端口的设备状态
+        devices = get_adb_map()
+        status = devices.get(device)
         logging.error(f"5推数据包,失败, {e}",
                       extra={'count': count, 'deviceID': device, 'result': status})
 

@@ -33,8 +33,12 @@ if __name__ == "__main__":
         # 创建CSV写入器
         logwriter = csv.writer(csvfile)
 
+    while True:
+        if count == round:
+            break
+        count += 1
+
         # 0.开所有HUB，调用接口openAll(初始化保证查询到所有连接设备)
-        # fixme 更改位置至循环体内，保证任意中断后能正常初始化进行下一次测试
         try:
             response = requests.post(openAllURL)
             # 检查请求是否成功
@@ -43,19 +47,15 @@ if __name__ == "__main__":
                 print(data)
                 time.sleep(5)
                 logging.info(f"开所有HUB,成功,{data}",
-                             extra={'count': count, 'deviceID': "启动项", 'result': "启动项"})
+                             extra={'count': count, 'deviceID': "初始化", 'result': "初始化"})
             else:
                 print(f"请求失败，状态码：{response.status_code}")
                 logging.info(f"开所有HUB,失败,{response.status_code}",
-                             extra={'count': count, 'deviceID': "启动项", 'result': "启动项"})
+                             extra={'count': count, 'deviceID': "初始化", 'result': "初始化"})
         except Exception as e:
             logging.error(f"开所有HUB,失败,{e}",
-                          extra={'count': count, 'deviceID': "启动项", 'result': "启动项"})
+                          extra={'count': count, 'deviceID': "初始化", 'result': "初始化"})
 
-    while True:
-        if count == round:
-            break
-        count += 1
         # 1.查所有设备在线状态 Adb devices(记录初始化后所有设备的状态信息)
         devices = get_adb_map()
         if not devices:
@@ -68,16 +68,6 @@ if __name__ == "__main__":
             # 2.选择平板X
             # 循环列表中的所有设备执行压力测试
             for key in hub_map.keys():
-                # 1.查所有设备在线状态 Adb devices（无端口操作，可删除）
-                devices = get_adb_map()
-                if not devices:
-                    logging.error(f"1查所有设备在线状态,失败,",
-                                  extra={'count': count, 'deviceID': "同一轮次", 'result': "出错：在线设备为空"})
-                    time.sleep(5)
-                    continue
-                else:
-                    logging.info(f"1查所有设备在线状态,成功, {devices}",
-                                 extra={'count': count, 'deviceID': "同一轮次", 'result': "尚未选择设备"})
                 # 若列表中有设备在线
                 if hub_map.get(key) in devices.keys():
                     print(key)
@@ -98,23 +88,31 @@ if __name__ == "__main__":
                         if response3.status_code == 200:
                             data = response3.json()
                             print(data)
+                            time.sleep(5)
+                            # 记录开启HUB后对应端口的设备状态
+                            devices = get_adb_map()
+                            status = devices.get(device_id)
                             logging.info(f"3开启HUB对应端口{key},成功,{data}",
                                          extra={'count': count, 'deviceID': device_id, 'result': status})
                         else:
                             print(f"请求失败，状态码：{response3.status_code}")
+                            # 记录开启HUB后对应端口的设备状态
+                            devices = get_adb_map()
+                            status = devices.get(device_id)
                             logging.info(f"3开启HUB对应端口{key},失败,{response3.status_code}",
                                          extra={'count': count, 'deviceID': device_id, 'result': status})
                             continue
                     except Exception as e:
+                        # 记录开启HUB后对应端口的设备状态
+                        devices = get_adb_map()
+                        status = devices.get(device_id)
                         logging.error(f"3开启HUB对应端口{key},失败,{e}",
                                       extra={'count': count, 'deviceID': device_id, 'result': status})
                         continue
                     # 4.删除平板中包，adb shell rm /path/to/example.txt
-                    # todo 增加是否删除判断
-                    run_adb_rm(count, device_id, status)
+                    run_adb_rm(count, device_id)
                     # 5.推数据包，adb push path/to/local/file /path/on/device
-                    # todo 增加是否成功推送判断
-                    run_adb_push(count, device_id, status)
+                    run_adb_push(count, device_id)
                     # 6.开所有HUB，调用接口openAll（记录IO后在线设备是否受影响）
                     try:
                         response6 = requests.post(openAllURL)
@@ -123,6 +121,7 @@ if __name__ == "__main__":
                             data = response6.json()
                             print(data)
                             time.sleep(5)
+                            # todo 若设备上下线情况变化
                             logging.info(f"6开所有HUB,成功,{data}",
                                          extra={'count': count, 'deviceID': device_id, 'result': status})
                         else:
@@ -232,25 +231,6 @@ if __name__ == "__main__":
                     # 12.拉数据包，adb pull /path/on/device path/to/local/file
                     # todo 增加是否拉取成功判断
                     run_adb_pull(count, device_id, status)
-                    # 13.开所有HUB，调用接口openAll（恢复全部可用状态）
-                    try:
-                        response13 = requests.post(openAllURL)
-                        # 检查请求是否成功
-                        if response13.status_code == 200:
-                            data = response13.json()
-                            print(data)
-                            time.sleep(5)
-                            logging.info(f"13开所有HUB,成功,{data}",
-                                         extra={'count': count, 'deviceID': device_id, 'result': status})
-                        else:
-                            print(f"请求失败，状态码：{response13.status_code}")
-                            logging.info(f"13开所有HUB,失败,{response13.status_code}",
-                                         extra={'count': count, 'deviceID': device_id, 'result': status})
-                            continue
-                    except Exception as e:
-                        logging.error(f"13开所有HUB,失败,{e}",
-                                      extra={'count': count, 'deviceID': device_id, 'result': status})
-                        continue
                     # 14.利用sha256校验文件完整性
                     try:
                         compare_files(count, device_id, status)
