@@ -9,6 +9,8 @@ import time
 import yaml
 
 # 本地文件，设备文件
+import staticTools
+
 local_file_path = "test.zip"
 local_compair_path = "test.zip"
 remote_file_path = "sdcard/Download/test.zip"
@@ -233,21 +235,29 @@ def compare_files(count, device, status):
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
+# todo 记录端口号和设备名
 def compare_devices_differences(map1, map2, log_file, count, step, device_id):
     # 打开日志文件
     with open(log_file, 'a') as log:
         # 获取两个字典的并集，以找出不同的键
         combined_keys = set(map1.keys()).union(map2.keys())
-        log.write(f"\n在第 '{count}' 轮次的'{step}'-步骤，执行设备 '{device_id}' 操作时的状态变化：\n")
+        log.write(f"\n在第 '{count}' 轮次的'{step}'-步骤，执行端口号 '{staticTools.devicePort_map.get(device_id)}'的设备 '{device_id}' 操作时的状态变化：\n")
         for key in combined_keys:
             # 如果 key 在 map1 (初始化查询设备列表)中有值而在 map2 (端口变化后设备列表)中没有，记录差异
             if key in map1 and key not in map2:
-                log.write(f"设备 '{key}' 掉线了。\n")
+                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 掉线了。\n")
             # 如果 key 在 map2 (端口变化后设备列表) 中有值而在 map1 (初始化查询设备列表) 中没有，记录差异
             elif key in map2 and key not in map1:
-                log.write(f"设备 '{key}' 为新增连接。\n")
+                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 为新增连接。\n")
             # 如果 key 在两个 map 中都存在但值不同，记录差异
             elif key in map1 and key in map2 and map1[key] != map2[key]:
-                log.write(f"设备 '{key}' 状态变化：{map1[key]}-->{map2[key]}\n")
+                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 状态变化：{map1[key]}-->{map2[key]}\n")
 
     print(f"设备状态变化已写入日志文件 '{log_file}'。")
+
+
+# 将一个字典（map）的值转换为另一个字典的键，并将所有值赋值为特定的字符串'device'
+def transform_and_set_value(input_map):
+    # 创建一个新的字典，其键为原字典的值，值为'device'
+    new_map = {v: 'device' for v in input_map.values()}
+    return new_map
