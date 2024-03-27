@@ -224,21 +224,21 @@ def compare_files(count, device, status):
     if sha1_file1 == sha1_file2:
         print("两个文件完整性和一致性校验通过。")
         time.sleep(5)
-        logging.info(f"14文件完整性校验,成功,SHA256哈希值:{sha1_file1} \n",
+        logging.info(f"13文件完整性校验,成功,SHA256哈希值:{sha1_file1} \n",
                      extra={'count': count, 'deviceID': device, 'result': status})
     else:
         print("两个文件完整性和一致性校验失败。")
         time.sleep(5)
-        logging.error(f"14文件完整性校验,失败,SHA256哈希值:{sha1_file1}!={sha1_file2} \n",
+        logging.error(f"13文件完整性校验,失败,SHA256哈希值:{sha1_file1}!={sha1_file2} \n",
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
 def compare_devices_differences(map1, map2, log_file, count, step, device_id):
     # 打开日志文件
-    with open(log_file, 'w') as log:
+    with open(log_file, 'a') as log:
         # 获取两个字典的并集，以找出不同的键
         combined_keys = set(map1.keys()).union(map2.keys())
-        log.write(f"在第 '{count}' 轮次的'{step}'-步骤，执行设备 '{device_id}' 操作时的状态变化：\n")
+        log.write(f"\n在第 '{count}' 轮次的'{step}'-步骤，执行设备 '{device_id}' 操作时的状态变化：\n")
         for key in combined_keys:
             # 如果 key 在 map1 (初始化查询设备列表)中有值而在 map2 (端口变化后设备列表)中没有，记录差异
             if key in map1 and key not in map2:
@@ -248,6 +248,6 @@ def compare_devices_differences(map1, map2, log_file, count, step, device_id):
                 log.write(f"设备 '{key}' 为新增连接。\n")
             # 如果 key 在两个 map 中都存在但值不同，记录差异
             elif key in map1 and key in map2 and map1[key] != map2[key]:
-                log.write(f"设备 '{key}' 状态变化：\n{map1[key]}\n-->{map2[key]}\n")
+                log.write(f"设备 '{key}' 状态变化：{map1[key]}-->{map2[key]}\n")
 
     print(f"设备状态变化已写入日志文件 '{log_file}'。")

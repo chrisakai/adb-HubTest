@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import csv
+import datetime
 import json
 import logging
 import time
+
 import requests
-from utils import get_adb_devices, read_yml, compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, \
+
+from utils import read_yml, compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, \
     read_setting, compare_devices_differences
 
 # 配置日志
@@ -13,6 +16,9 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S',
                     filename='log.csv',
                     filemode='w')
+
+# 测试日日期
+date = datetime.date.today()
 
 # 请求接口
 openDoorURL = "http://127.0.0.1:8200/hub/openDoorOnly"
@@ -27,7 +33,7 @@ if __name__ == "__main__":
     hub_map = read_yml()
     setting = read_setting()
     round = setting.get("round")
-    devices_map_log = 'devices_map_change.log'
+    devices_map_log = 'devices_map_change' + str(date) + '.log'
 
     with open('log.csv', 'w', newline='') as csvfile:
         # 创建CSV写入器
@@ -270,7 +276,7 @@ if __name__ == "__main__":
                         compare_files(count, device_id, status)
                     except Exception as e:
                         time.sleep(5)
-                        logging.error(f"14文件完整性校验,失败,{e} \n",
+                        logging.error(f"13文件完整性校验,失败,{e} \n",
                                       extra={'count': count, 'deviceID': device_id, 'result': status})
                         continue
                 else:
