@@ -6,11 +6,7 @@ import re
 import subprocess
 import time
 
-import yaml
-
 # 本地文件，设备文件
-import staticTools
-
 local_file_path = "test.zip"
 local_compair_path = "test.zip"
 remote_file_path = "sdcard/Download/test.zip"
@@ -159,52 +155,6 @@ def run_adb_pull(count, device, status):
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
-def read_yml():
-    with open("devices.yaml", "r") as file:
-        config_data = yaml.safe_load(file)
-        # 转换为字典
-    config_map = {}
-    for key, value in config_data.items():
-        if isinstance(value, dict):
-            nested_map = read_yml(value)
-            config_map[key] = nested_map
-        elif isinstance(value, list):
-            nested_list = []
-            for item in value:
-                if isinstance(item, dict):
-                    nested_list.append(read_yml(item))
-                else:
-                    nested_list.append(item)
-            config_map[key] = nested_list
-        else:
-            config_map[key] = value
-
-    return config_map
-
-
-def read_setting():
-    with open("setting.yaml", "r") as file:
-        config_data = yaml.safe_load(file)
-        # 转换为字典
-    config_map = {}
-    for key, value in config_data.items():
-        if isinstance(value, dict):
-            nested_map = read_yml(value)
-            config_map[key] = nested_map
-        elif isinstance(value, list):
-            nested_list = []
-            for item in value:
-                if isinstance(item, dict):
-                    nested_list.append(read_yml(item))
-                else:
-                    nested_list.append(item)
-            config_map[key] = nested_list
-        else:
-            config_map[key] = value
-
-    return config_map
-
-
 def calculate_sha256(file_path):
     """计算文件的SHA256哈希值并返回"""
     sha256_hash = hashlib.sha256()
@@ -235,23 +185,22 @@ def compare_files(count, device, status):
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
-# todo 记录端口号和设备名
-def compare_devices_differences(map1, map2, log_file, count, step, device_id):
+def compare_devices_differences(map1, map2, log_file, count, step, device_id, devicePort_map):
     # 打开日志文件
     with open(log_file, 'a') as log:
         # 获取两个字典的并集，以找出不同的键
         combined_keys = set(map1.keys()).union(map2.keys())
-        log.write(f"\n在第 '{count}' 轮次的'{step}'-步骤，执行端口号 '{staticTools.devicePort_map.get(device_id)}'的设备 '{device_id}' 操作时的状态变化：\n")
+        log.write(f"\n在第 '{count}' 轮次的'{step}'-步骤，执行端口号 '{devicePort_map.get(device_id)}'的设备 '{device_id}' 操作时的状态变化：\n")
         for key in combined_keys:
             # 如果 key 在 map1 (初始化查询设备列表)中有值而在 map2 (端口变化后设备列表)中没有，记录差异
             if key in map1 and key not in map2:
-                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 掉线了。\n")
+                log.write(f"端口号 '{devicePort_map.get(key)}'的设备 '{key}' 掉线了。\n")
             # 如果 key 在 map2 (端口变化后设备列表) 中有值而在 map1 (初始化查询设备列表) 中没有，记录差异
             elif key in map2 and key not in map1:
-                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 为新增连接。\n")
+                log.write(f"端口号 '{devicePort_map.get(key)}'的设备 '{key}' 为新增连接。\n")
             # 如果 key 在两个 map 中都存在但值不同，记录差异
             elif key in map1 and key in map2 and map1[key] != map2[key]:
-                log.write(f"端口号 '{staticTools.devicePort_map.get(key)}'的设备 '{key}' 状态变化：{map1[key]}-->{map2[key]}\n")
+                log.write(f"端口号 '{devicePort_map.get(key)}'的设备 '{key}' 状态变化：{map1[key]}-->{map2[key]}\n")
 
     print(f"设备状态变化已写入日志文件 '{log_file}'。")
 

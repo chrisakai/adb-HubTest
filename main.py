@@ -6,9 +6,10 @@ import logging
 import time
 
 import requests
+import autoMappingPort
 
-from utils import read_yml, compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, \
-    read_setting, compare_devices_differences, transform_and_set_value
+from staticTools import read_yml, read_setting, getDevicePortMap
+from utils import compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, compare_devices_differences, transform_and_set_value
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
@@ -19,7 +20,12 @@ logging.basicConfig(level=logging.INFO,
 
 # 测试日日期
 date = datetime.date.today()
-
+# 读取配置文件列表
+hub_map = read_yml()
+setting = read_setting()
+round = setting.get("round")
+devices_map_log = 'devices_map_change' + str(date) + '.log'
+devicePort_map = getDevicePortMap()
 # 请求接口
 openDoorURL = "http://127.0.0.1:8200/hub/openDoorOnly"
 openAllURL = "http://127.0.0.1:8200/hub/openAll"
@@ -29,11 +35,8 @@ count = 0
 
 # 主程序
 if __name__ == "__main__":
-    # 读取配置文件列表
-    hub_map = read_yml()
-    setting = read_setting()
-    round = setting.get("round")
-    devices_map_log = 'devices_map_change' + str(date) + '.log'
+
+    exec('autoMappingPort')
 
     with open('log.csv', 'w', newline='') as csvfile:
         # 创建CSV写入器
@@ -69,13 +72,14 @@ if __name__ == "__main__":
             devices_init = get_adb_map()
             if not devices_init:
                 logging.error(f"1查所有设备在线状态,失败,",
-                              extra={'count': count - 1, 'deviceID': "新轮次", 'result': "出错：在线设备为空"})
+                              extra={'count': count - 1, 'deviceID': "尚未选择设备", 'result': "出错：在线设备为空"})
                 time.sleep(5)
                 continue
             else:
                 logging.info(f"1查所有设备在线状态,成功, {devices_init}",
-                             extra={'count': count, 'deviceID': "新轮次", 'result': "新轮次"})
-                compare_devices_differences(transform_and_set_value(hub_map), devices_init, devices_map_log, count, "1查所有设备在线状态", device_id)
+                             extra={'count': count, 'deviceID': "尚未选择设备", 'result': "详细见查询结果列"})
+                compare_devices_differences(transform_and_set_value(hub_map), devices_init, devices_map_log, count,
+                                            "1查所有设备在线状态", "尚未选择设备", devicePort_map)
             # 若列表中有设备在线
             if hub_map.get(key) in devices_init.keys():
                 print(key)
@@ -126,6 +130,9 @@ if __name__ == "__main__":
                 # 6.开所有HUB，调用接口openAll（记录IO后在线设备是否受影响）
                 try:
                     response6 = requests.post(openAllURL)
+                    # 记录对应端口的设备状态
+                    devices = get_adb_map()
+                    status = devices.get(device_id)
                     # 检查请求是否成功
                     if response6.status_code == 200:
                         data = response6.json()
@@ -144,7 +151,7 @@ if __name__ == "__main__":
                     # 若设备上下线情况变化，记录到单独的日志文件中
                     devices_after = get_adb_map()
                     compare_devices_differences(devices_init, devices_after, devices_map_log, count, "6开所有HUB",
-                                                device_id)
+                                                device_id, devicePort_map)
                     continue
                 try:
                     # 7.查所有设备在线状态 Adb devices（记录IO后在线设备是否受影响）
@@ -154,28 +161,24 @@ if __name__ == "__main__":
                         logging.error(f"7查所有设备在线状态,失败,",
                                       extra={'count': count, 'deviceID': device_id, 'result': "出错：在线设备为空"})
                         compare_devices_differences(devices_init, devices_after, devices_map_log, count,
-                                                    "7查所有设备在线状态",
-                                                    device_id)
+                                                    "7查所有设备在线状态", device_id, devicePort_map)
                         continue
                     elif status != "device":
                         logging.error(f"7在线状态,失败, {device_id}该设备状态为{status}",
                                       extra={'count': count, 'deviceID': device_id, 'result': status})
                         compare_devices_differences(devices_init, devices_after, devices_map_log, count,
-                                                    "7查所有设备在线状态",
-                                                    device_id)
+                                                    "7查所有设备在线状态", device_id, devicePort_map)
                         continue
                     else:
                         logging.info(f"7查所有设备在线状态,成功,{devices_after}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                         compare_devices_differences(devices_init, devices_after, devices_map_log, count,
-                                                    "7查所有设备在线状态",
-                                                    device_id)
+                                                    "7查所有设备在线状态", device_id, devicePort_map)
                 except Exception as e:
                     logging.error(f"7查所有设备在线状态,失败,{e}",
                                   extra={'count': count, 'deviceID': device_id, 'result': "adb执行异常"})
                     compare_devices_differences(devices_init, devices_after, devices_map_log, count,
-                                                "7查所有设备在线状态",
-                                                device_id)
+                                                "7查所有设备在线状态", device_id, devicePort_map)
                     continue
                 try:
                     # 8.关对应HUB，调用接口closeDoorOnly（模拟领取任务后的拔出操作）
@@ -218,7 +221,7 @@ if __name__ == "__main__":
                     # 若设备上下线情况变化，记录到单独的日志文件中
                     devices_after = get_adb_map()
                     compare_devices_differences(devices_init, devices_after, devices_map_log, count, "9开启HUB对应端口",
-                                                device_id)
+                                                device_id, devicePort_map)
                     continue
                 try:
                     # 10.查对应设备在线状态 Adb devices
