@@ -8,7 +8,7 @@ import time
 
 # 本地文件，设备文件
 local_file_path = "test.zip"
-local_compair_path = "test.zip"
+local_compair_path = "compair.zip"
 remote_file_path = "sdcard/Download/test.zip"
 
 
