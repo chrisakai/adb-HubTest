@@ -40,6 +40,7 @@ for port in range(start_port, end_port + 1):
     device_id = None
 
     # 查找匹配的设备ID
+    # fixme 状态无意义
     for device in devices:
         if "unauthorized" not in device:
             device_id = device.split("\t")[0]

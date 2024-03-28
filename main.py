@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 # 检查请求是否成功
                 if response.status_code == 200:
                     data = response.json()
-                    print(data)
+                    print("0开所有HUB" + str(data))
                     time.sleep(5)
                     logging.info(f"开所有HUB,成功,{data}",
                                  extra={'count': count, 'deviceID': "初始化", 'result': "初始化"})
@@ -76,13 +76,14 @@ if __name__ == "__main__":
                 time.sleep(5)
                 continue
             else:
+                print("1.查所有设备在线状态")
                 logging.info(f"1查所有设备在线状态,成功, {devices_init}",
                              extra={'count': count, 'deviceID': "尚未选择设备", 'result': "详细见查询结果列"})
                 compare_devices_differences(transform_and_set_value(hub_map), devices_init, devices_map_log, count,
                                             "1查所有设备在线状态", "尚未选择设备", devicePort_map)
             # 若列表中有设备在线
             if hub_map.get(key) in devices_init.keys():
-                print(key)
+                print("2.选择端口:" + str(key))
                 # 2.选择平板X
                 device_id = hub_map.get(key)
                 status = devices_init.get(device_id)
@@ -101,7 +102,7 @@ if __name__ == "__main__":
                     # 检查请求是否成功
                     if response3.status_code == 200:
                         data = response3.json()
-                        print(data)
+                        print("3.开对应HUB" + str(data))
                         time.sleep(5)
                         # 记录开启HUB后对应端口的设备状态
                         devices = get_adb_map()
@@ -136,7 +137,7 @@ if __name__ == "__main__":
                     # 检查请求是否成功
                     if response6.status_code == 200:
                         data = response6.json()
-                        print(data)
+                        print("6.开所有HUB" + str(data))
                         time.sleep(5)
                         logging.info(f"6开所有HUB,成功,{data}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
@@ -157,6 +158,7 @@ if __name__ == "__main__":
                     # 7.查所有设备在线状态 Adb devices（记录IO后在线设备是否受影响）
                     devices_after = get_adb_map()
                     status = devices_after.get(device_id)
+                    print("7.查所有设备在线状态中")
                     if not devices_after:
                         logging.error(f"7查所有设备在线状态,失败,",
                                       extra={'count': count, 'deviceID': device_id, 'result': "出错：在线设备为空"})
@@ -187,7 +189,7 @@ if __name__ == "__main__":
                     # 检查请求是否成功
                     if response8.status_code == 200:
                         data = response8.json()
-                        print(data)
+                        print("8.关闭HUB对应端口:" + str(key) + "  " + str(data))
                         logging.info(f"8关闭HUB对应端口{key},成功,{data}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                     else:
@@ -206,7 +208,7 @@ if __name__ == "__main__":
                     # 检查请求是否成功
                     if response9.status_code == 200:
                         data = response9.json()
-                        print(data)
+                        print("9.开启HUB对应端口:" + str(key) + "  " + str(data))
                         logging.info(f"9开启HUB对应端口{key},成功,{data}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                         time.sleep(5)
@@ -237,6 +239,7 @@ if __name__ == "__main__":
                                       extra={'count': count, 'deviceID': device_id, 'result': status})
                         continue
                     else:
+                        print("10.查所有设备在线状态中")
                         logging.info(f"10查所有设备在线状态,成功,{devices}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                 except Exception as e:
@@ -251,7 +254,7 @@ if __name__ == "__main__":
                     # 检查请求是否成功
                     if response11.status_code == 200:
                         data = response11.json()
-                        print(data)
+                        print("11.开启HUB对应端口" + str(key) + "  " + str(data))
                         logging.info(f"11开启HUB对应端口{key},成功,{data}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                     else:
@@ -265,7 +268,7 @@ if __name__ == "__main__":
                     continue
                 # 12.拉数据包，adb pull /path/on/device path/to/local/file
                 run_adb_pull(count, device_id, status)
-                # 14.利用sha256校验文件完整性
+                # 13.利用sha256校验文件完整性
                 try:
                     compare_files(count, device_id, status)
                 except Exception as e:
@@ -274,7 +277,7 @@ if __name__ == "__main__":
                                   extra={'count': count, 'deviceID': device_id, 'result': status})
                     continue
             else:
-                print("设备不在线")
+                print("2.设备不在线")
                 logging.info(f"2选择平板,失败,设备{hub_map.get(key)}未连接 \n",
                              extra={'count': count, 'deviceID': hub_map.get(key), 'result': "未连接"})
                 time.sleep(5)

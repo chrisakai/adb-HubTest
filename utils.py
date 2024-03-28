@@ -7,6 +7,7 @@ import subprocess
 import time
 
 # 本地文件，设备文件
+local_base_path = "base.zip"
 local_file_path = "test.zip"
 local_compair_path = "compair.zip"
 remote_file_path = "sdcard/Download/test.zip"
@@ -23,6 +24,8 @@ def get_adb_devices():
         result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         # 获取标准输出
         output = result.stdout
+        # if "offline" in output:
+        #     breakpoint()
         # 如果adb命令执行成功，则进一步处理输出
         if result.returncode == 0:
             # 移除标题行 ("List of devices attached")
@@ -73,7 +76,7 @@ def run_adb_rm(count, device):
         # 执行adb命令
         result = subprocess.run(adb_command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True)
-        print("删除文件结果：")
+        print("4.删除文件结果：")
         print(result)
         # 记录对应端口的设备状态
         devices = get_adb_map()
@@ -93,12 +96,12 @@ def run_adb_rm(count, device):
 def run_adb_push(count, device):
     time.sleep(5)
     # 完整的adb命令
-    adb_command = f"adb -s {device} push {local_file_path} {remote_file_path}"
+    adb_command = f"adb -s {device} push {local_base_path} {remote_file_path}"
     try:
         # 执行adb命令
         result = subprocess.run(adb_command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True)
-        print("推送文件结果：")
+        print("5.推送文件结果：")
         print(result.stdout)
         pattern_cost_time = r'(\d+\.\d+)s'
         pattern_file_size = r'\d+(?= bytes in)'
@@ -134,7 +137,7 @@ def run_adb_pull(count, device, status):
         # 执行adb命令
         result = subprocess.run(adb_command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True)
-        print("拉取文件结果：")
+        print("12.拉取文件结果：")
         print(result.stdout)
         pattern_cost_time = r'(\d+\.\d+)s'
         pattern_file_size = r'\d+(?= bytes in)'
@@ -170,16 +173,16 @@ def calculate_sha256(file_path):
 def compare_files(count, device, status):
     """校验两个文件的完整性"""
     # 计算并比较两个文件的SHA256哈希值
-    sha1_file1 = calculate_sha256(local_file_path)
+    sha1_file1 = calculate_sha256(local_base_path)
     sha1_file2 = calculate_sha256(local_compair_path)
 
     if sha1_file1 == sha1_file2:
-        print("两个文件完整性和一致性校验通过。")
+        print("13.两个文件完整性和一致性校验通过。")
         time.sleep(5)
         logging.info(f"13文件完整性校验,成功,SHA256哈希值:{sha1_file1} \n",
                      extra={'count': count, 'deviceID': device, 'result': status})
     else:
-        print("两个文件完整性和一致性校验失败。")
+        print("13.两个文件完整性和一致性校验失败。")
         time.sleep(5)
         logging.error(f"13文件完整性校验,失败,SHA256哈希值:{sha1_file1}!={sha1_file2} \n",
                       extra={'count': count, 'deviceID': device, 'result': status})
