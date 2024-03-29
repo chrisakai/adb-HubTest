@@ -11,6 +11,7 @@ from staticTools import getDevicePortMap
 
 # 假设openDoorURL是一个API端点，可以打开hub端口
 openDoorURL = "http://127.0.0.1:8200/hub/openDoorOnly"
+closeDoorURL = "http://127.0.0.1:8200/hub/closeDoorOnly"
 
 # 要遍历的端口范围
 start_port = 1
@@ -21,7 +22,7 @@ count = 0
 output_yaml_file = "port_device_mapping.yaml"
 # 配置日志
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s , %(levelname)s ,第%(count)s轮, %(status)s, 设备%(deviceID)s',
+                    format='%(asctime)s , %(levelname)s ,第%(count)s轮, 端口%(port)s, 设备%(deviceID)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     filename='offline_devices.csv',
                     filemode='a')
@@ -42,11 +43,11 @@ def adb_device():
             device = [line.split('\t')[0] for line in devices if line.strip()]
             status = [line.split('\t')[1] for line in devices if line.strip()]
             if "offline" in status:
-                # device_port_map = getDevicePortMap()
-                # port = device_port_map.get(device[0])
-                breakpoint()
+                device_port_map = getDevicePortMap()
+                port = device_port_map.get(device[0])
+                # breakpoint()
                 logging.error(f"offline",
-                             extra={'count': count, 'status': 'offline', 'deviceID': device})
+                             extra={'count': count, 'port': port, 'deviceID': device})
             return device
         else:
             # 如果adb命令执行失败，则打印错误信息
@@ -67,14 +68,23 @@ while(True):
     for port in range(start_port, end_port + 1):
         # 录入数组
         json_array = json.dumps([port])
+
+        # 关对应HUB，调用接口closeDoorOnly（模拟领取任务后的拔出操作）
+        responseClose = requests.post(closeDoorURL, data=json_array,
+                                      headers={'Content-Type': 'application/json'})
+        # 检查请求是否成功
+        if responseClose.status_code != 200:
+            print(f"Failed to close port {port}. Skipping...")
+            continue
+
         # 调用openDoorURL接口以打开端口
-        response = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
+        responseOpen = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
                                   data=json_array)
-        time.sleep(5)
-        if response.status_code != 200:
+        if responseOpen.status_code != 200:
             print(f"Failed to open port {port}. Skipping...")
             continue
 
+        time.sleep(5)
         # 执行adb device命令并解析输出
         devices = adb_device()
         device_id = None
