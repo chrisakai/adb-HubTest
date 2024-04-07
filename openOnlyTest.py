@@ -12,6 +12,7 @@ from staticTools import getDevicePortMap
 # 假设openDoorURL是一个API端点，可以打开hub端口
 openDoorURL = "http://127.0.0.1:8200/hub/openDoorOnly"
 closeDoorURL = "http://127.0.0.1:8200/hub/closeDoorOnly"
+closeAllURL = "http://127.0.0.1:8200/hub/closeAll"
 
 # 要遍历的端口范围
 start_port = 1
@@ -42,6 +43,7 @@ def adb_device():
             # 去除每行前面的空白字符并按需求格式化输出
             device = [line.split('\t')[0] for line in devices if line.strip()]
             status = [line.split('\t')[1] for line in devices if line.strip()]
+            print(result.stdout.strip())
             if "offline" in status:
                 device_port_map = getDevicePortMap()
                 port = device_port_map.get(device[0])
@@ -58,49 +60,44 @@ def adb_device():
 
 while(True):
     count += 1
-    # 删除文件
-    if os.path.exists(output_yaml_file):  # 先检查文件是否存在，避免错误
-        os.remove(output_yaml_file)
-        print(f"文件 {output_yaml_file} 已删除。")
-    else:
-        print(f"文件 {output_yaml_file} 不存在。")
 
-    for port in range(start_port, end_port + 1):
-        # 录入数组
-        json_array = json.dumps([port])
+    port = 10
+    # 录入数组
+    json_array = json.dumps([port])
 
-        # 关对应HUB，调用接口closeDoorOnly（模拟领取任务后的拔出操作）
-        responseClose = requests.post(closeDoorURL, data=json_array,
-                                      headers={'Content-Type': 'application/json'})
-        # 检查请求是否成功
-        if responseClose.status_code != 200:
-            print(f"Failed to close port {port}. Skipping...")
-            continue
+    # 关对应HUB，调用接口closeDoorOnly（模拟领取任务后的拔出操作）
+    responseClose = requests.post(closeAllURL)
+    # 检查请求是否成功
+    if responseClose.status_code != 200:
+        print(f"Failed to close all port. Skipping...")
+        continue
 
-        # 调用openDoorURL接口以打开端口
-        responseOpen = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
-                                  data=json_array)
-        if responseOpen.status_code != 200:
-            print(f"Failed to open port {port}. Skipping...")
-            continue
+    time.sleep(3)
 
-        time.sleep(5)
-        # 执行adb device命令并解析输出
-        devices = adb_device()
-        device_id = None
+    # 调用openDoorURL接口以打开端口
+    responseOpen = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
+                              data=json_array)
+    if responseOpen.status_code != 200:
+        print(f"Failed to open port {port}. Skipping...")
+        continue
 
-        # 查找匹配的设备ID
-        for device in devices:
-            if "unauthorized" not in device:
-                device_id = device.split("\t")[0]
-                break
+    time.sleep(5)
+    # 执行adb device命令并解析输出
+    devices = adb_device()
+    device_id = None
 
-        # 将端口与设备ID写入YAML文件
-        if device_id:
-            mapping = {int(port): str(device_id)}
-            with open(output_yaml_file, "a") as f:
-                yaml.dump(mapping, f)
-            print(f"Port {port} is bound to device {device_id}.")
-        else:
-            print(f"No device found for port {port}. Skipping...")
+    # 查找匹配的设备ID
+    for device in devices:
+        if "unauthorized" not in device:
+            device_id = device.split("\t")[0]
+            break
+
+    # # 将端口与设备ID写入YAML文件
+    # if device_id:
+    #     mapping = {int(port): str(device_id)}
+    #     with open(output_yaml_file, "a") as f:
+    #         yaml.dump(mapping, f)
+    #     print(f"Port {port} is bound to device {device_id}.")
+    # else:
+    #     print(f"No device found for port {port}. Skipping...")
 
