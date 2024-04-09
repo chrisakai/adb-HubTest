@@ -6,7 +6,7 @@ import logging
 import time
 
 import requests
-import autoMappingPort
+# import autoMappingPort
 
 from staticTools import read_yml, read_setting, getDevicePortMap
 from utils import compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, compare_devices_differences, transform_and_set_value
@@ -36,7 +36,7 @@ count = 0
 # 主程序
 if __name__ == "__main__":
 
-    exec('autoMappingPort')
+    # exec('autoMappingPort')
 
     with open('log.csv', 'w', newline='') as csvfile:
         # 创建CSV写入器

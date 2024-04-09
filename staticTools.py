@@ -2,7 +2,7 @@ import yaml
 
 
 def read_yml():
-    with open("port_device_mapping.yaml", "r") as file:
+    with open("devices.yaml", "r") as file:
         config_data = yaml.safe_load(file)
         # 转换为字典
     config_map = {}
