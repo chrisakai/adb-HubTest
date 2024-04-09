@@ -113,33 +113,46 @@ if __name__ == "__main__":
                     continue
                 # 录入数组
                 json_array = json.dumps([key])
+                retry = 0
                 try:
-                    time.sleep(5)
-                    # 3.关闭所有HUB开对应HUB，调用接口openDoorOnly（目的在于提升传输速率）
-                    response3 = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
-                                              data=json_array)
-                    # 检查请求是否成功
-                    if response3.status_code == 200:
-                        data = response3.json()
-                        print("3.开对应HUB" + str(data))
+                    while retry < 3:
                         time.sleep(5)
-                        # 记录开启HUB后对应端口的设备状态
-                        devices = get_adb_map()
-                        status = devices.get(device_id)
-                        logging.info(f"3开启HUB对应端口{key},成功,{data}",
-                                     extra={'count': count, 'deviceID': device_id, 'result': status})
-                        logging.info(f"3.5查所有设备,成功,{devices}",
-                                     extra={'count': count, 'deviceID': device_id, 'result': status})
-                    else:
-                        print(f"请求失败，状态码：{response3.status_code}")
-                        # 记录开启HUB后对应端口的设备状态
-                        devices = get_adb_map()
-                        if devices.get("error"):
-                            status = devices.get("error")
-                        else:
+                        # 3.关闭所有HUB开对应HUB，调用接口openDoorOnly（目的在于提升传输速率）
+                        response3 = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
+                                                  data=json_array)
+                        # 检查请求是否成功
+                        if response3.status_code == 200:
+                            data = response3.json()
+                            print("3.开对应HUB" + str(data))
+                            time.sleep(5)
+                            # 记录开启HUB后对应端口的设备状态
+                            devices = get_adb_map()
+                            logging.info(f"3.5查所有设备,成功,{devices}",
+                                         extra={'count': count, 'deviceID': device_id, 'result': status})
                             status = devices.get(device_id)
-                        logging.error(f"3开启HUB对应端口{key},失败,{response3.status_code}",
-                                      extra={'count': count, 'deviceID': device_id, 'result': status})
+                            if status == "offline":
+                                retry += 1
+                                logging.info(f"3开启HUB对应端口{key}失败:状态为offline,重试第{retry}次,{data}",
+                                             extra={'count': count, 'deviceID': device_id, 'result': status})
+                                continue
+                            else:
+                                logging.info(f"3开启HUB对应端口{key},成功,{data}",
+                                             extra={'count': count, 'deviceID': device_id, 'result': status})
+                                break
+                        else:
+                            print(f"请求失败，状态码：{response3.status_code}")
+                            # 记录开启HUB后对应端口的设备状态
+                            devices = get_adb_map()
+                            if devices.get("error"):
+                                status = devices.get("error")
+                            else:
+                                status = devices.get(device_id)
+                            logging.error(f"3开启HUB对应端口{key},失败,{response3.status_code}",
+                                          extra={'count': count, 'deviceID': device_id, 'result': status})
+                            continue
+                    if retry == 3:
+                        logging.info(f"3开启HUB对应端口{key}失败:状态为offline,重试第{retry}次已达上限,{data}",
+                                     extra={'count': count, 'deviceID': device_id, 'result': status})
                         continue
                 except Exception as e:
                     # 记录开启HUB后对应端口的设备状态
