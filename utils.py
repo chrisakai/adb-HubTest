@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import logging
+import os.path
 # 使用ADB命令
 import re
 import subprocess
@@ -56,12 +57,19 @@ def get_adb_map():
         devices = output.split('\n')[1:-1]
         # 去除每行前面的空白字符并按需求格式化输出
         devices = [line.split('\t') for line in devices if line.strip()]
-        for device_info in devices:
-            # 设备序列号和名称
-            serial, name = device_info
-            # 去除名称中的'\r'字符
-            name = name.rstrip('\r')
-            devices_map[serial] = name
+        if not devices:
+            devices_map["error"] = "设备为空"
+        else:
+            for device_info in devices:
+                # 设备序列号和名称
+                serial, name = device_info
+                # 去除名称中的'\r'字符
+                name = name.rstrip('\r')
+                devices_map[serial] = name
+    else:
+        # 如果adb命令执行失败，则打印错误信息
+        print(result.stderr.strip())
+        devices_map["error"] = result.stderr.strip()
     # 打印设备字典
     print(devices_map)
     return devices_map
@@ -124,13 +132,18 @@ def run_adb_push(count, device):
         # 记录失败后对应端口的设备状态
         devices = get_adb_map()
         status = devices.get(device)
-        logging.error(f"5推数据包,失败, {e}",
+        logging.error(f"5推数据包,失败, {e.stdout}",
                       extra={'count': count, 'deviceID': device, 'result': status})
 
 
 # 使用ADB命令
 def run_adb_pull(count, device, status):
     time.sleep(5)
+    if os.path.isfile(local_compair_path):
+        os.remove(local_compair_path)
+        print(f"文件 {local_compair_path} 已被删除。")
+    else:
+        print(f"文件 {local_compair_path} 不存在。")
     # 完整的adb命令
     adb_command = f"adb -s {device} pull {remote_file_path} {local_compair_path} "
     try:
@@ -172,20 +185,25 @@ def calculate_sha256(file_path):
 
 def compare_files(count, device, status):
     """校验两个文件的完整性"""
-    # 计算并比较两个文件的SHA256哈希值
-    sha1_file1 = calculate_sha256(local_base_path)
-    sha1_file2 = calculate_sha256(local_compair_path)
-
-    if sha1_file1 == sha1_file2:
-        print("13.两个文件完整性和一致性校验通过。")
-        time.sleep(5)
-        logging.info(f"13文件完整性校验,成功,SHA256哈希值:{sha1_file1} \n",
+    if not local_compair_path:
+        print("13.文件推拉失败。")
+        logging.info(f"13文件完整性校验,失败,文件推拉失败 \n",
                      extra={'count': count, 'deviceID': device, 'result': status})
     else:
-        print("13.两个文件完整性和一致性校验失败。")
-        time.sleep(5)
-        logging.error(f"13文件完整性校验,失败,SHA256哈希值:{sha1_file1}!={sha1_file2} \n",
-                      extra={'count': count, 'deviceID': device, 'result': status})
+        # 计算并比较两个文件的SHA256哈希值
+        sha1_file1 = calculate_sha256(local_base_path)
+        sha1_file2 = calculate_sha256(local_compair_path)
+
+        if sha1_file1 == sha1_file2:
+            print("13.两个文件完整性和一致性校验通过。")
+            time.sleep(5)
+            logging.info(f"13文件完整性校验,成功,SHA256哈希值:{sha1_file1} \n",
+                         extra={'count': count, 'deviceID': device, 'result': status})
+        else:
+            print("13.两个文件完整性和一致性校验失败。")
+            time.sleep(5)
+            logging.error(f"13文件完整性校验,失败,SHA256哈希值:{sha1_file1}!={sha1_file2} \n",
+                          extra={'count': count, 'deviceID': device, 'result': status})
 
 
 def compare_devices_differences(map1, map2, log_file, count, step, device_id, devicePort_map):
