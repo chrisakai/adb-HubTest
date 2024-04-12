@@ -116,6 +116,9 @@ if __name__ == "__main__":
                 retry = 0
                 try:
                     while retry < 3:
+                        responseCloseAll = requests.post(closeAllURL)
+                        if responseCloseAll.status_code != 200:
+                            continue
                         time.sleep(5)
                         # 3.关闭所有HUB开对应HUB，调用接口openDoorOnly（目的在于提升传输速率）
                         response3 = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
@@ -127,13 +130,13 @@ if __name__ == "__main__":
                             time.sleep(5)
                             # 记录开启HUB后对应端口的设备状态
                             devices = get_adb_map()
+                            status = devices.get(device_id)
                             logging.info(f"3.5查所有设备,成功,{devices}",
                                          extra={'count': count, 'deviceID': device_id, 'result': status})
-                            status = devices.get(device_id)
                             if status == "offline":
                                 retry += 1
                                 logging.info(f"3开启HUB对应端口{key}失败:状态为offline,重试第{retry}次,{data}",
-                                             extra={'count': count, 'deviceID': device_id, 'result': status})
+                                             extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                 continue
                             else:
                                 logging.info(f"3开启HUB对应端口{key},成功,{data}",

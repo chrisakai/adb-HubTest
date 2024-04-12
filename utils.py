@@ -51,6 +51,10 @@ def get_adb_map():
     result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     # 获取标准输出
     output = result.stdout
+    if "offline" in output:
+        subprocess.run(['adb', 'kill-server'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        time.sleep(5)
+        get_adb_map()
     # 如果adb命令执行成功，则进一步处理输出
     if result.returncode == 0:
         # 移除标题行 ("List of devices attached")
