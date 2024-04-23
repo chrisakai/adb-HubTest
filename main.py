@@ -188,15 +188,15 @@ if __name__ == "__main__":
                                 devices = get_adb_map()
                                 status = devices.get(device_id)
                                 logging.info(f"offline重试查所有设备,成功,{devices}",
-                                             extra={'count': count, 'deviceID': device_id, 'result': status})
+                                             extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                 if status == "offline":
                                     pushretry += 1
-                                    logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{retry}次,{data}",
+                                    logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次,{data}",
                                                  extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                     continue
                                 else:
                                     logging.info(f"offline重试开启HUB对应端口{key},成功,{data}",
-                                                 extra={'count': count, 'deviceID': device_id, 'result': status})
+                                                 extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                     break
                             else:
                                 print(f"请求失败，状态码：{response3.status_code}")
@@ -212,8 +212,8 @@ if __name__ == "__main__":
                         else:
                             break
                     if pushretry == 3:
-                        logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{retry}次已达上限",
-                                     extra={'count': count, 'deviceID': device_id, 'result': status})
+                        logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次已达上限",
+                                     extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                         logging.info(
                             f"开始尝试重启adb server,重启adb server",
                             extra={'count': count, 'deviceID': device_id, 'result': status})

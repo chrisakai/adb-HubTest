@@ -143,6 +143,7 @@ def run_adb_push(count, device):
         status = devices.get(device)
         logging.error(f"5推数据包,失败, {e.stdout}",
                       extra={'count': count, 'deviceID': device, 'result': status})
+        return "offline"
 
 
 # 使用ADB命令
