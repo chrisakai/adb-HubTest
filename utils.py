@@ -46,7 +46,7 @@ def get_adb_devices():
 def get_adb_map():
     # 初始化一个空字典来保存设备信息
     devices_map = {}
-    time.sleep(5)
+    time.sleep(30)
     # 执行adb devices命令
     result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     # 获取标准输出
@@ -113,6 +113,10 @@ def run_adb_push(count, device):
         # 执行adb命令
         result = subprocess.run(adb_command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True)
+        # 获取标准输出
+        output = result.stdout
+        if "offline" in output:
+            return "offline"
         print("5.推送文件结果：")
         print(result.stdout)
         pattern_cost_time = r'(\d+\.\d+)s'
@@ -131,6 +135,7 @@ def run_adb_push(count, device):
         status = devices.get(device)
         logging.info(f"5推数据包,成功,{file_size}M文件共花费{cost_time}传输速率{speed}",
                      extra={'count': count, 'deviceID': device, 'result': status})
+        return "success"
     except subprocess.CalledProcessError as e:
         print(f"adb命令执行错误：\n{e.stderr}")
         # 记录失败后对应端口的设备状态
