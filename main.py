@@ -177,17 +177,17 @@ if __name__ == "__main__":
                                 continue
                             time.sleep(30)
                             # 3.关闭所有HUB开对应HUB，调用接口openDoorOnly（目的在于提升传输速率）
-                            response3 = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
+                            responseRetry = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
                                                       data=json_array)
                             # 检查请求是否成功
-                            if response3.status_code == 200:
-                                data = response3.json()
+                            if responseRetry.status_code == 200:
+                                data = responseRetry.json()
                                 print("offline重试开对应HUB" + str(data))
                                 time.sleep(5)
                                 # 记录开启HUB后对应端口的设备状态
                                 devices = get_adb_map()
                                 status = devices.get(device_id)
-                                logging.info(f"offline重试查所有设备,成功,{devices}",
+                                logging.info(f"offline重试查所有设备,成功,重试第{pushretry}次,{devices}",
                                              extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                 if status == "offline":
                                     pushretry += 1
@@ -195,18 +195,18 @@ if __name__ == "__main__":
                                                  extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                     continue
                                 else:
-                                    logging.info(f"offline重试开启HUB对应端口{key},成功,{data}",
+                                    logging.info(f"offline重试开启HUB对应端口{key},成功,重试第{pushretry}次,{data}",
                                                  extra={'count': count, 'deviceID': device_id, 'result': "retry"})
-                                    break
+                                    continue
                             else:
-                                print(f"请求失败，状态码：{response3.status_code}")
+                                print(f"请求失败，状态码：{responseRetry.status_code}")
                                 # 记录开启HUB后对应端口的设备状态
                                 devices = get_adb_map()
                                 if devices.get("error"):
                                     status = devices.get("error")
                                 else:
                                     status = devices.get(device_id)
-                                logging.error(f"offline重试开启HUB对应端口{key},失败,{response3.status_code}",
+                                logging.error(f"offline重试开启HUB对应端口{key},失败,重试第{pushretry}次,{responseRetry.status_code}",
                                               extra={'count': count, 'deviceID': device_id, 'result': status})
                                 continue
                         else:
