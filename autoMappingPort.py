@@ -30,7 +30,7 @@ for port in range(start_port, end_port + 1):
     # 调用openDoorURL接口以打开端口
     response = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
                               data=json_array)
-    time.sleep(5)
+    time.sleep(10)
     if response.status_code != 200:
         print(f"Failed to open port {port}. Skipping...")
         continue

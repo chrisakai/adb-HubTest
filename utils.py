@@ -44,17 +44,17 @@ def get_adb_devices():
 
 # 改进，还需要记录设备后的状态（offline,unauthorized,device状态）
 def get_adb_map():
+    time.sleep(30)
     # 初始化一个空字典来保存设备信息
     devices_map = {}
-    time.sleep(30)
     # 执行adb devices命令
     result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     # 获取标准输出
     output = result.stdout
-    if "offline" in output:
-        subprocess.run(['adb', 'kill-server'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        time.sleep(5)
-        get_adb_map()
+    # if "offline" in output:
+    #     subprocess.run(['adb', 'kill-server'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    #     time.sleep(5)
+    #     get_adb_map()
     # 如果adb命令执行成功，则进一步处理输出
     if result.returncode == 0:
         # 移除标题行 ("List of devices attached")

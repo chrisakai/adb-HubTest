@@ -3,6 +3,7 @@ import csv
 import datetime
 import json
 import logging
+
 import subprocess
 import time
 
@@ -10,7 +11,8 @@ import requests
 # import autoMappingPort
 
 from staticTools import read_yml, read_setting, getDevicePortMap
-from utils import compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, compare_devices_differences, transform_and_set_value
+from utils import compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, compare_devices_differences, \
+    transform_and_set_value
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
@@ -136,7 +138,7 @@ if __name__ == "__main__":
                                          extra={'count': count, 'deviceID': device_id, 'result': status})
                             if status == "offline":
                                 retry += 1
-                                logging.info(f"3开启HUB对应端口{key}失败:状态为offline,重试第{retry}次,{data}",
+                                logging.info(f"3开启HUB对应端口{key}:状态为offline,重试第{retry}次,{data}",
                                              extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                 continue
                             else:
@@ -155,7 +157,7 @@ if __name__ == "__main__":
                                           extra={'count': count, 'deviceID': device_id, 'result': status})
                             continue
                     if retry == 3:
-                        logging.info(f"3开启HUB对应端口{key}失败:状态为offline,重试第{retry}次已达上限,{data}",
+                        logging.info(f"3开启HUB对应端口{key}:状态为offline,重试第{retry}次已达上限,{data} \n",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
                         continue
                 except Exception as e:
@@ -178,7 +180,7 @@ if __name__ == "__main__":
                             time.sleep(30)
                             # 3.关闭所有HUB开对应HUB，调用接口openDoorOnly（目的在于提升传输速率）
                             responseRetry = requests.post(openDoorURL, headers={'Content-Type': 'application/json'},
-                                                      data=json_array)
+                                                          data=json_array)
                             # 检查请求是否成功
                             if responseRetry.status_code == 200:
                                 data = responseRetry.json()
@@ -187,14 +189,16 @@ if __name__ == "__main__":
                                 # 记录开启HUB后对应端口的设备状态
                                 devices = get_adb_map()
                                 status = devices.get(device_id)
-                                logging.info(f"offline重试查所有设备,成功,重试第{pushretry}次,{devices}",
+                                logging.info(f"offline重试查所有设备,成功,{devices}",
                                              extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                 if status == "offline":
                                     pushretry += 1
-                                    logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次,{data}",
-                                                 extra={'count': count, 'deviceID': device_id, 'result': "retry"})
+                                    logging.info(
+                                        f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次,{data}",
+                                        extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                     continue
                                 else:
+                                    pushretry += 1
                                     logging.info(f"offline重试开启HUB对应端口{key},成功,重试第{pushretry}次,{data}",
                                                  extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                                     continue
@@ -206,13 +210,15 @@ if __name__ == "__main__":
                                     status = devices.get("error")
                                 else:
                                     status = devices.get(device_id)
-                                logging.error(f"offline重试开启HUB对应端口{key},失败,重试第{pushretry}次,{responseRetry.status_code}",
-                                              extra={'count': count, 'deviceID': device_id, 'result': status})
+                                pushretry += 1
+                                logging.error(
+                                    f"offline重试开启HUB对应端口{key},失败,重试第{pushretry}次,{responseRetry.status_code}",
+                                    extra={'count': count, 'deviceID': device_id, 'result': status})
                                 continue
                         else:
                             break
                     if pushretry == 3:
-                        logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次已达上限",
+                        logging.info(f"offline重试开启HUB对应端口{key}失败:状态为offline,重试第{pushretry}次已达上限 \n",
                                      extra={'count': count, 'deviceID': device_id, 'result': "retry"})
                         logging.info(
                             f"开始尝试重启adb server,重启adb server",
@@ -257,34 +263,35 @@ if __name__ == "__main__":
                     continue
                 try:
                     # 7.查所有设备在线状态 Adb devices（记录IO后在线设备是否受影响）
-                    devices_after = get_adb_map()
-                    status = devices_after.get(device_id)
+                    devices7 = get_adb_map()
+                    status = devices7.get(device_id)
                     print("7.查所有设备在线状态中")
-                    if not devices_after:
+                    if not devices7:
                         logging.error(f"7查所有设备在线状态,失败, \n",
                                       extra={'count': count, 'deviceID': device_id, 'result': "出错：在线设备为空"})
-                        compare_devices_differences(devices_init, devices_after, devices_map_log, count,
+                        compare_devices_differences(devices_init, devices7, devices_map_log, count,
                                                     "7查所有设备在线状态", device_id, devicePort_map)
                         continue
                     elif status != "device":
                         logging.error(f"7在线状态,失败, {device_id}该设备状态为{status} \n",
                                       extra={'count': count, 'deviceID': device_id, 'result': status})
-                        compare_devices_differences(devices_init, devices_after, devices_map_log, count,
+                        compare_devices_differences(devices_init, devices7, devices_map_log, count,
                                                     "7查所有设备在线状态", device_id, devicePort_map)
                         continue
                     else:
-                        logging.info(f"7查所有设备在线状态,成功,{devices_after}",
+                        logging.info(f"7查所有设备在线状态,成功,{devices7}",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
-                        compare_devices_differences(devices_init, devices_after, devices_map_log, count,
+                        compare_devices_differences(devices_init, devices7, devices_map_log, count,
                                                     "7查所有设备在线状态", device_id, devicePort_map)
                 except Exception as e:
                     logging.error(f"7查所有设备在线状态,失败,{e} \n",
                                   extra={'count': count, 'deviceID': device_id, 'result': "adb执行异常"})
-                    compare_devices_differences(devices_init, devices_after, devices_map_log, count,
+                    compare_devices_differences(devices_init, devices7, devices_map_log, count,
                                                 "7查所有设备在线状态", device_id, devicePort_map)
                     continue
                 try:
                     # 8.关所有HUB，closeAllURL（模拟领取任务后的拔出操作）
+                    print("8.关所有HUB")
                     response8 = requests.post(closeAllURL)
                     devices_after = get_adb_map()
                     status = devices_after.get(device_id)
@@ -308,10 +315,20 @@ if __name__ == "__main__":
                     # 9.开对应HUB，调用接口openDoorOnly（模拟领取任务后执行完归还的插入操作）
                     response9 = requests.post(openDoorURL, data=json_array,
                                               headers={'Content-Type': 'application/json'})
-                    devices_after = get_adb_map()
-                    status = devices_after.get(device_id)
                     # 检查请求是否成功
                     if response9.status_code == 200:
+                        retry = 0
+                        while retry < 3:
+                            devices_after = get_adb_map()
+                            status = devices_after.get(device_id)
+                            if status == "offline" or status == "设备为空" or status == "None":
+                                retry += 1
+                                print("重新尝试第" + str(retry) + "次查询")
+                                continue
+                            # elif status == "None":
+                            #     breakpoint()
+                            else:
+                                break
                         data = response9.json()
                         print("9.开启HUB对应端口:" + str(key) + "  " + str(data))
                         logging.info(f"9开启HUB对应端口{key},成功,{data}",
