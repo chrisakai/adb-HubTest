@@ -33,6 +33,7 @@ devicePort_map = getDevicePortMap()
 openDoorURL = "http://127.0.0.1:8200/hub/openDoor"
 openAllURL = "http://127.0.0.1:8200/hub/openAll"
 closeAllURL = "http://127.0.0.1:8200/hub/closeAll"
+devicesInfoURL = "http://127.0.0.1:8200/link/devicesInfo"
 
 count = 0
 
@@ -82,6 +83,18 @@ if __name__ == "__main__":
                 print("1.查所有设备在线状态")
                 logging.info(f"1查所有设备在线状态,成功, {devices_init}",
                              extra={'count': count, 'deviceID': "尚未选择设备", 'result': "详细见查询结果列"})
+                print("1.1查所有终端信息并记入日志")
+                try:
+                    responseDevicesInfo = requests.get(devicesInfoURL)
+                    # 检查请求是否成功
+                    if responseDevicesInfo.status_code == 200:
+                        data = responseDevicesInfo.json()
+                        logging.info(f"1.1查所有设备信息,成功, {data}",
+                                     extra={'count': count, 'deviceID': "info", 'result': "info"})
+                    else:
+                        logging.info(f"1.1查所有设备信息,失败")
+                except Exception as e:
+                    logging.error(f"1.1查所有设备信息,失败,{e}")
                 compare_devices_differences(transform_and_set_value(hub_map), devices_init, devices_map_log, count,
                                             "1查所有设备在线状态", "尚未选择设备", devicePort_map)
             # 若列表中有设备在线
@@ -159,6 +172,12 @@ if __name__ == "__main__":
                     if retry == 3:
                         logging.info(f"3开启HUB对应端口{key}:状态为offline,重试第{retry}次已达上限,{data} \n",
                                      extra={'count': count, 'deviceID': device_id, 'result': status})
+                        logging.info(
+                            f"开始尝试重启adb server,重启adb server",
+                            extra={'count': count, 'deviceID': device_id, 'result': status})
+                        subprocess.run(['adb', 'kill-server'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       text=True)
+                        time.sleep(30)
                         continue
                 except Exception as e:
                     # 记录开启HUB后对应端口的设备状态

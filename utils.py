@@ -44,7 +44,7 @@ def get_adb_devices():
 
 # 改进，还需要记录设备后的状态（offline,unauthorized,device状态）
 def get_adb_map():
-    time.sleep(30)
+    time.sleep(40)
     # 初始化一个空字典来保存设备信息
     devices_map = {}
     # 执行adb devices命令
