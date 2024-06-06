@@ -46,9 +46,15 @@ if __name__ == "__main__":
 
     # exec('autoMappingPort')
 
-    shutil.copy('port_device_mapping.yaml', 'devices.yaml')
-
+    try:
+        shutil.copy('port_device_mapping.yaml', 'devices.yaml')
+    except Exception as e:
+        print("-----文件拷贝异常-----")
+    else:
+        print("-----文件拷贝成功-----")
+        time.sleep(3)
     mapA = convert_to_map('devices.yaml')
+    print("-----mapA为" + str(mapA) + "-----")
 
     with open('log.csv', 'w', newline='') as csvfile:
         # 创建CSV写入器
