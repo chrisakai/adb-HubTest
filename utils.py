@@ -246,7 +246,7 @@ def transform_and_set_value(input_map):
 def connection_lost(log_file, count, device_id, devicePort_map, lostCount):
     # 打开日志文件
     with open(log_file, 'a') as log:
-        log.write(f"\n端口号 '{devicePort_map.get(device_id)}'的设备 '{device_id}'在第 '{count}' 轮次掉线， 截至目前掉线'{}'次\n")
+        log.write(f"\n端口号 '{devicePort_map.get(device_id)}'的设备 '{device_id}'在第 '{count}' 轮次掉线， 截至目前掉线'{lostCount}'次\n")
     print(f"离线设备已写入日志文件 '{log_file}'。")
 
 
