@@ -241,3 +241,25 @@ def transform_and_set_value(input_map):
     # 创建一个新的字典，其键为原字典的值，值为'device'
     new_map = {v: 'device' for v in input_map.values()}
     return new_map
+
+
+def connection_lost(log_file, count, device_id, devicePort_map, lostCount):
+    # 打开日志文件
+    with open(log_file, 'a') as log:
+        log.write(f"\n端口号 '{devicePort_map.get(device_id)}'的设备 '{device_id}'在第 '{count}' 轮次掉线， 截至目前掉线'{}'次\n")
+    print(f"离线设备已写入日志文件 '{log_file}'。")
+
+
+def update_lostMap(map, key):
+    """更新计数字典，如果键不存在则设置为1，如果存在则加1。
+
+    参数:
+    map : dict
+        存储键和计数的字典。
+    key : object
+        要更新的键。
+    """
+    if key in map:
+        map[key] += 1  # 如果键存在，增加它的计数
+    else:
+        map[key] = 1  # 如果键不存在，将它添加到字典并设置为1

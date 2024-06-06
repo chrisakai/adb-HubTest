@@ -3,16 +3,18 @@ import csv
 import datetime
 import json
 import logging
+import shutil
 
 import subprocess
 import time
 
 import requests
 # import autoMappingPort
-
+from convert_to_map import convert_to_map
+from roundMapping import roundMapping
 from staticTools import read_yml, read_setting, getDevicePortMap
 from utils import compare_files, run_adb_pull, run_adb_rm, run_adb_push, get_adb_map, compare_devices_differences, \
-    transform_and_set_value
+    transform_and_set_value, update_lostMap, connection_lost
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
@@ -28,6 +30,8 @@ hub_map = read_yml()
 setting = read_setting()
 round = setting.get("round")
 devices_map_log = 'devices_map_change' + str(date) + '.log'
+connection_log = 'connection' + str(date) + '.log'
+lostMap = {}
 devicePort_map = getDevicePortMap()
 # 请求接口
 openDoorURL = "http://127.0.0.1:8200/hub/openDoor"
@@ -42,6 +46,10 @@ if __name__ == "__main__":
 
     # exec('autoMappingPort')
 
+    shutil.copy('port_device_mapping.yaml', 'devices.yaml')
+
+    mapA = convert_to_map('devices.yaml')
+
     with open('log.csv', 'w', newline='') as csvfile:
         # 创建CSV写入器
         logwriter = csv.writer(csvfile)
@@ -50,10 +58,9 @@ if __name__ == "__main__":
         if count == round:
             break
         count += 1
-
+        print("——————开始新的轮次——————")
         # 循环列表中的所有设备执行压力测试
         for key in hub_map.keys():
-
             # 0.开所有HUB，调用接口openAll(初始化保证查询到所有连接设备)
             try:
                 response = requests.post(openAllURL)
@@ -416,8 +423,12 @@ if __name__ == "__main__":
                     logging.error(f"13文件完整性校验,失败,{e} \n",
                                   extra={'count': count, 'deviceID': device_id, 'result': status})
                     continue
-            else:
-                print("2.设备不在线")
+            elif hub_map.get(key) not in devices_init.keys():
+                print("2.设备掉线")
                 logging.info(f"2选择平板,失败,设备{hub_map.get(key)}未连接 \n",
                              extra={'count': count, 'deviceID': hub_map.get(key), 'result': "未连接"})
+                # 记录一个map用于计数不同设备掉线次数
+                update_lostMap(lostMap, key)
+                connection_lost(connection_log, count, hub_map.get(key), devicePort_map, lostMap.get(key))
                 time.sleep(5)
+
