@@ -52,7 +52,7 @@ if __name__ == "__main__":
         print("-----文件拷贝异常-----")
     else:
         print("-----文件拷贝成功-----")
-        time.sleep(3)
+        time.sleep(10)
     mapA = convert_to_map('devices.yaml')
     print("-----mapA为" + str(mapA) + "-----")
 
@@ -65,6 +65,7 @@ if __name__ == "__main__":
             break
         count += 1
         print("——————开始新的轮次——————")
+        print("——————当前轮次" + str(count) + "——————")
         # 循环列表中的所有设备执行压力测试
         for key in hub_map.keys():
             # 0.开所有HUB，调用接口openAll(初始化保证查询到所有连接设备)
