@@ -49,7 +49,8 @@ def get_adb_map():
     # 初始化一个空字典来保存设备信息
     devices_map = {}
     # 执行adb devices命令
-    result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            check=True, capture_output=True)
     # 获取标准输出
     output = result.stdout
     # if "offline" in output:

@@ -87,7 +87,15 @@ if __name__ == "__main__":
                               extra={'count': count, 'deviceID': "初始化", 'result': "初始化"})
 
             # 1.查所有设备在线状态 Adb devices(记录初始化后所有设备的状态信息)
-            devices_init = get_adb_map()
+            # 加入重试3次机制
+            adbDeviceRetry = 0
+            while adbDeviceRetry < 3:
+                devices_init = get_adb_map()
+                if hub_map.get(key) in devices_init.keys():
+                    break
+                else:
+                    adbDeviceRetry += 1
+                    continue
             if not devices_init:
                 logging.error(f"1查所有设备在线状态,失败,",
                               extra={'count': count - 1, 'deviceID': "尚未选择设备", 'result': "出错：在线设备为空"})
