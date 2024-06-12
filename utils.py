@@ -50,7 +50,7 @@ def get_adb_map():
     devices_map = {}
     # 执行adb devices命令
     result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                            check=True, capture_output=True)
+                            check=True)
     # 获取标准输出
     output = result.stdout
     # if "offline" in output:
