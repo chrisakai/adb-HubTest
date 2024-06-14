@@ -95,6 +95,9 @@ if __name__ == "__main__":
                     break
                 else:
                     adbDeviceRetry += 1
+                    print("重试adb查询")
+                    logging.info(f"1查所有设备在线状态,重试, {devices_init}",
+                                 extra={'count': count, 'deviceID': "重试adb查询", 'result': "详细见查询结果列"})
                     continue
             if not devices_init:
                 logging.error(f"1查所有设备在线状态,失败,",
